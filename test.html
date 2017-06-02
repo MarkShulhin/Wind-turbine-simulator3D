@@ -10,40 +10,45 @@
     </style>
 </head>
 <body>
-    <script src="js/three.js"></script>
+    <script src="js/three.min.js"></script>
+    <script src="js/THREEx.KeyboardState.js"></script>
+    <script src="js/THREEx.FullScreen.js"></script>  
     <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/Math2.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r14/Stats.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.min.js   "></script>
-        <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/GeometryHelpers.js"></script>
-        <script src="//cdnjs.cloudflare.com/ajax/libs/gsap/1.16.1/TweenMax.min.js"></script>
-        <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/scene_colors.js"></script>
-        <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/OrbitControls.js"></script>
-        <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/CustomMeshFlat.js"></script>
-        <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/dat.gui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r14/Stats.min.js"></script>
+    <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/GeometryHelpers.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/gsap/1.16.1/TweenMax.min.js"></script>
+    <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/scene_colors.js"></script>
+    <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/OrbitControls.js"></script>
+    <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/CustomMeshFlat.js"></script>
+    <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/dat.gui.min.js"></script>
     <script>
         var scene, camera, renderer;
 
 var WIDTH  = window.innerWidth;
 var HEIGHT = window.innerHeight;
-var waitingParticles = [],
-flyingParticles = [];
+
 
 var SPEED = 0.01;
+var keyboard = new THREEx.KeyboardState();
 
 function init() {
 
     scene = new THREE.Scene();
+  
 
     createStats();
     createLights();
-    createFloor();
+    createFloor(); 
     initMesh(0,0,0);
     initMesh(3,0,-5);
     initCamera();
     initRenderer();
-     
-    document.body.appendChild(renderer.domElement);
+    initControls(); 
+	THREEx.FullScreen.bindKey({ charCode : 'm'.charCodeAt(0) });
+    document.body.appendChild(renderer.domElement);      
 }
+
+
 
 function createStats(){
             // STATS
@@ -60,6 +65,9 @@ function initCamera() {
     camera = new THREE.PerspectiveCamera(70, WIDTH / HEIGHT, .1, 3000);
     camera.position.set(0, 3.5, 5);
     camera.lookAt(scene.position);
+}
+function initControls(){
+    controls = new THREE.OrbitControls( camera, renderer.domElement );
 }
 
 function initRenderer() {
@@ -92,7 +100,7 @@ var Floor = function(){
                 v.x += Math2.rangeRandom(-0.5,0.5);
                 v.z += Math2.rangeRandom(-0.5,0.5);
                 v.y += Math2.rangeRandom(-0.5,0.5);
-            }
+            }          
             this.mesh.geometry.computeFaceNormals();
             this.mesh.geometry.verticesNeedUpdate = true;
             this.mesh.geometry.colorsNeedUpdate = true;
@@ -134,21 +142,27 @@ function rotateMesh() {
     for(var i=0;i<meshes.length;i++){
 
    // mesh.rotation.x -= SPEED * 2;
-    meshes[i].rotation.y -= SPEED;
+    meshes[i].rotation.y = -3.8;
     //mesh.rotation.z -= SPEED * 3;
     }
     stats.end();
 }
 
+function animate() 
+{
+    requestAnimationFrame( animate );  
+	render();		
+	update();
+}
 
 function render() {
-    requestAnimationFrame(render);
-    rotateMesh();
+    controls.update();
+	stats.update();    
     renderer.render(scene, camera);
 }
 
 init();
-render();
+animate();
 
     </script>
 </body>
