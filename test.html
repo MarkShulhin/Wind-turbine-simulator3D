@@ -5,63 +5,141 @@
         canvas {
             width: 100%;
             height: 100%;
+            background-color: deepskyblue;
         }
     </style>
 </head>
 <body>
     <script src="js/three.js"></script>
+    <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/Math2.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r14/Stats.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.min.js   "></script>
+        <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/GeometryHelpers.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/gsap/1.16.1/TweenMax.min.js"></script>
+        <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/scene_colors.js"></script>
+        <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/OrbitControls.js"></script>
+        <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/CustomMeshFlat.js"></script>
+        <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/dat.gui.min.js"></script>
     <script>
         var scene, camera, renderer;
 
 var WIDTH  = window.innerWidth;
 var HEIGHT = window.innerHeight;
+var waitingParticles = [],
+flyingParticles = [];
 
 var SPEED = 0.01;
 
 function init() {
+
     scene = new THREE.Scene();
 
-    initMesh();
+    createStats();
+    createLights();
+    createFloor();
+    initMesh(0,0,0);
+    initMesh(3,0,-5);
     initCamera();
     initRenderer();
-
+     
     document.body.appendChild(renderer.domElement);
 }
 
+function createStats(){
+            // STATS
+            stats = new Stats();
+            stats.setMode( 0 ); // 0: fps, 1: ms, 2: mb
+            // align top-left
+            stats.domElement.style.position = 'absolute';
+            stats.domElement.style.left = '10px';
+            stats.domElement.style.top = '10px';
+            document.body.appendChild( stats.domElement );
+            }
+
 function initCamera() {
-    camera = new THREE.PerspectiveCamera(70, WIDTH / HEIGHT, 1, 10);
+    camera = new THREE.PerspectiveCamera(70, WIDTH / HEIGHT, .1, 3000);
     camera.position.set(0, 3.5, 5);
     camera.lookAt(scene.position);
 }
 
 function initRenderer() {
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({alpha: true, antialias: true });
     renderer.setSize(WIDTH, HEIGHT);
+    renderer.shadowMap.enabled = true;
 }
 
-var mesh = null;
-function initMesh() {
+var meshes = [];
+function initMesh(x,y,z) {
     var loader = new THREE.JSONLoader();
     loader.load('./WindGenerator.json', function(geometry,materials) {
         var material = new THREE.MeshBasicMaterial();
         material.map = THREE.ImageUtils.loadTexture('/BrushedMetal.jpg');
         material.side = THREE.DoubleSide;
-        mesh = new THREE.Mesh( geometry, material );
+        var mesh = new THREE.Mesh( geometry, material );
         mesh.scale.set(0.25,0.25,0.25);
+        mesh.position.set(x,y,z);
+        mesh.rotation.y = -3.95;
+        meshes.push(mesh);
         scene.add(mesh);
     });
 }
+var Floor = function(){
+            var floorCol = Colors.green_d;
+            this.mesh =  new CustomMesh.PlaneMesh(50,50,11, floorCol);
+            var vertices = this.mesh.geometry.vertices;
+            for (var i=0; i<vertices.length; i++){
+                var v = vertices[i];
+                v.x += Math2.rangeRandom(-0.5,0.5);
+                v.z += Math2.rangeRandom(-0.5,0.5);
+                v.y += Math2.rangeRandom(-0.5,0.5);
+            }
+            this.mesh.geometry.computeFaceNormals();
+            this.mesh.geometry.verticesNeedUpdate = true;
+            this.mesh.geometry.colorsNeedUpdate = true;
+            //
+            //this.mesh.geometry.computeVertexNormals();
+            this.mesh.rotation.x = -Math.PI / 2;
+            this.mesh.position.set(0,0,0);
+}
 
+function createFloor(){ 
+            floor = new Floor();           
+            scene.add(floor.mesh);
+}
+var globalLight, shadowLight, backLight;
+function createLights() {
+
+            var globalLight = new THREE.HemisphereLight(Colors.white_d, Colors.white_d, .8)
+            
+            var pointLight = new THREE.PointLight( Colors.pink_l, 1, 300 );
+            pointLight.position.set( 35, 50, 30 );
+            var sphereSize = 10;
+            var pointLightHelper = new THREE.PointLightHelper( pointLight, sphereSize );
+            
+            shadowLight = new THREE.DirectionalLight(0xffffff, 1);
+            shadowLight.position.set(100, 150, 100);
+            shadowLight.castShadow = true;
+            shadowLight.shadowDarkness = .2;
+            shadowLight.shadowMapWidth = shadowLight.shadowMapHeight = 1024;
+            scene.add(shadowLight);
+            scene.add(pointLight );  
+            scene.add(globalLight);  
+}
 	
 function rotateMesh() {
-    if (!mesh) {
+    stats.begin();
+    if (!meshes) {
         return;
     }
+    for(var i=0;i<meshes.length;i++){
 
    // mesh.rotation.x -= SPEED * 2;
-    mesh.rotation.y -= SPEED;
+    meshes[i].rotation.y -= SPEED;
     //mesh.rotation.z -= SPEED * 3;
+    }
+    stats.end();
 }
+
 
 function render() {
     requestAnimationFrame(render);
