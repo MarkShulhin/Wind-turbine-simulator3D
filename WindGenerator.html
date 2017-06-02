@@ -316,6 +316,22 @@
                 updateShadows();  
             } 
             }
+             CreateWG = function() {
+                var loader = new THREE.JSONLoader();
+                loader.load('./WindGenerator.json', function(geometry,materials) {
+                    var material = new THREE.MeshBasicMaterial();
+                    material.map = THREE.ImageUtils.loadTexture('/BrushedMetal.jpg');
+                    material.side = THREE.DoubleSide;
+                    var mesh = new THREE.Mesh( geometry, material );
+                    mesh.scale.set(15,15,15);
+                    mesh.position.y = -5;
+                    mesh.rotation.y = -3.95;
+                    //meshes.push(mesh);
+                    scene.add(mesh);
+                    updateShadows();
+                });
+            }
+            
 
 
             ////////////////////////////////////////////////
@@ -346,7 +362,7 @@
 
             // TRUNC
 
-            Trunc = function(complex){
+        Trunc = function(complex){
             this.type = "trunc";
                 this.pointsTrunc = [];
                 this.hierarchy = 1;
@@ -589,9 +605,9 @@
                     attDef.mesh = attach;
                 }
                 geom.verticesNeedUpdate = true;
-            }
+        }
 
-            Trunc.prototype.kill = function(){
+        Trunc.prototype.kill = function(){
             var mesh = this.mesh;
             var geom = this.mesh.geometry;
                 var l = geom.vertices.length;
@@ -601,9 +617,9 @@
                 }
             killGrow(mesh);
             mesh = null;
-            }
+        }
 
-            function killGrow(mesh){
+        function killGrow(mesh){
             for (var i=0; i<mesh.children.length; i++){
                     var child = mesh.children[i];
                 TweenMax.killTweensOf(child.scale);
@@ -611,7 +627,7 @@
                     killGrow(child);
                 child = null;
                 }
-            }
+        }
 
 
             Trunc.prototype.grow = function(){
@@ -637,39 +653,29 @@
                 this.mesh.geometry.verticesNeedUpdate = true;
             }
 
-            //Trunc.prototype.growAttachs = grow;
-
-            /*
-            BottleTrunc.prototype.updateWind = function(power){	
-                this.mesh.rotation.z = (power/1000);
-                for (var i=0; i<this.mesh.children.length; i++){
-                    var child = this.mesh.children[i];
-                    child.rotation.z = child.userData.targetRotZ + Math.random()*power/1000;
-                }
-            }
-            //*/
+            
 
             // BRANCH
 
             ElbowBranch = function(radius, thickness, color, colorFoliagePalette, hierarchy, complex){
-            this.type = "elbowBranch";
-                var radSegs = (complex)?5:3;
-                var tubSegs = (complex)?10:4;
+                this.type = "elbowBranch";
+                    var radSegs = (complex)?5:3;
+                    var tubSegs = (complex)?10:4;
 
-                this.mesh = new CustomMesh.QuarterTorusMesh(radius,thickness,radSegs,tubSegs,Math.PI/2,color);
-                this.mesh.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(thickness,-thickness*2,0));
-                this.mesh.userData.hierarchy = hierarchy;
-            this.mesh.userData.refClass = this;
+                    this.mesh = new CustomMesh.QuarterTorusMesh(radius,thickness,radSegs,tubSegs,Math.PI/2,color);
+                    this.mesh.geometry.applyMatrix(new THREE.Matrix4().makeTranslation(thickness,-thickness*2,0));
+                    this.mesh.userData.hierarchy = hierarchy;
+                    this.mesh.userData.refClass = this;
 
                 var folThick = (complex)? parameters.foliageSize*(1+Math.random()*.5) : Math2.rangeRandom(8,24);
-                this.attach = new Foliage(folThick, colorFoliagePalette, hierarchy+1,complex).mesh;
-                
-                this.attach.position.x = -radius;
-                this.attach.position.y = radius - (thickness*3);
-                this.mesh.add(this.attach);
+                    this.attach = new Foliage(folThick, colorFoliagePalette, hierarchy+1,complex).mesh;
+                    
+                    this.attach.position.x = -radius;
+                    this.attach.position.y = radius - (thickness*3);
+                    this.mesh.add(this.attach);
             }
 
-            Branch =function(h, thickness, color, colorFoliagePalette, hierarchy,complex){
+        Branch =function(h, thickness, color, colorFoliagePalette, hierarchy,complex){
             this.type = "branch";
                 var radSegs = (complex)?5:3;
                 
@@ -682,11 +688,11 @@
                 this.attach = new Foliage(folThick, colorFoliagePalette, hierarchy+1,complex).mesh;
                 this.attach.position.y = h-2;
                 this.mesh.add(this.attach);
-            }
+        }
 
             // FRUIT
 
-            Tomatoe = function(scale, colorFruit, colorLeaves,complex){
+        Tomatoe = function(scale, colorFruit, colorLeaves,complex){
             this.type = "fruit";
                 this.mesh = new THREE.Object3D();
             this.mesh.userData.refClass = this;
@@ -721,10 +727,10 @@
                 this.core.add(this.fruit);
                 this.mesh.add(this.line);
                 this.mesh.add(this.core);
-            }
+        }
 
             // LEAF
-            Leaf = function(scale, color){
+        Leaf = function(scale, color){
             this.type = "leaf";
                 this.mesh = new THREE.Object3D();
             this.mesh.userData.refClass = this;
@@ -737,10 +743,10 @@
                 this.core.position.z = this.stem.endPoint.z;
                 this.core.quaternion.setFromUnitVectors ( new THREE.Vector3( 0, 1, 0 ), this.stem.lastDirection);
                 this.mesh.add(this.core);
-            }
+        }
 
             // STEM
-            Stem  = function(scale, color, complex){
+        Stem  = function(scale, color, complex){
             this.type = "stem";
                 this.lastDirection = new THREE.Vector3();
                 this.endPoint = new THREE.Vector3();
@@ -773,11 +779,11 @@
                 }
                 this.mesh =  CustomMesh.CurvedPath(linePoints, scale/10, color);
             this.mesh.userData.refClass = this;
-            }
+        }
 
             // FOLIAGE
 
-            Foliage = function(scale, colorPalette, hierarchy,complex){
+        Foliage = function(scale, colorPalette, hierarchy,complex){
             
             this.type="foliage";
                 var sw = (complex)? Math2.rangeRandomInt(3,10):Math2.rangeRandomInt(3,5);
@@ -823,19 +829,19 @@
                 }
                 if (complex) foliagesComplex.push(this);
             else foliages.push(this);
-            }
+        }
 
-            SubFoliage = function(scale, hierarchy){
+        SubFoliage = function(scale, hierarchy){
             this.type = "subfoliage";
                 var sw = Math2.rangeRandomInt(2,4);
                 var sh = Math2.rangeRandomInt(2,4);
                 this.mesh = new CustomMesh.SphereMesh(scale,sw,sh,Colors.getRandomFrom(Colors.leaves), true);	
                 this.mesh.userData.hierarchy = hierarchy;
             this.mesh.userData.refClass = this;
-            }
+        }
 
             Foliage.prototype.launchParticle = function(){
-            var p;
+                var p;
                 var col = Colors.getRandomFrom(this.colPalette);
                 if (waitingParticles.length){
                     p = waitingParticles.pop();
@@ -857,20 +863,20 @@
             }
 
             Foliage.prototype.grow = function(){
-            console.log("grow foliage");
-                var scope = this;
-                var geom = this.mesh.geometry;
-                var l = geom.vertices.length;
-                for (var i=0; i<l; i++){
-                    var v = geom.vertices[i];
-                    var d =  Math.random()*.5 + v.y/25;
-                    var s = Math.random() + 20/parameters.animationSpeed;
-                var sx = Math2.rangeRandom(-2,2);
-                var sy = Math2.rangeRandom(-2,2);
-                var sz = Math2.rangeRandom(-2,2);
-                    TweenMax.from(v, s, {x:0,z:0, y:0, delay:d, ease:Strong.easeInOut, onUpdate:scope.replaceAttachs, onUpdateScope:scope});
-            }
-                grow(this.mesh);
+                console.log("grow foliage");
+                    var scope = this;
+                    var geom = this.mesh.geometry;
+                    var l = geom.vertices.length;
+                    for (var i=0; i<l; i++){
+                        var v = geom.vertices[i];
+                        var d =  Math.random()*.5 + v.y/25;
+                        var s = Math.random() + 20/parameters.animationSpeed;
+                    var sx = Math2.rangeRandom(-2,2);
+                    var sy = Math2.rangeRandom(-2,2);
+                    var sz = Math2.rangeRandom(-2,2);
+                        TweenMax.from(v, s, {x:0,z:0, y:0, delay:d, ease:Strong.easeInOut, onUpdate:scope.replaceAttachs, onUpdateScope:scope});
+                }
+                    grow(this.mesh);
             }
 
             Foliage.prototype.replaceAttachs = function(){
@@ -927,28 +933,28 @@
             createLights();
             createFloor();
             createForest();
-            createTree();
+            var wd = new CreateWG();
             loop();
             }
 
             function updateShadows(){
-            scene.traverse( function ( object ) {
-                if ( object instanceof THREE.Mesh ) {
-                object.castShadow = true;
-                object.receiveShadow = true;
-                }
-            });
+                scene.traverse( function ( object ) {
+                    if ( object instanceof THREE.Mesh ) {
+                    object.castShadow = true;
+                    object.receiveShadow = true;
+                    }
+                });
             }
 
             function createStats(){
-            // STATS
-            stats = new Stats();
-            stats.setMode( 0 ); // 0: fps, 1: ms, 2: mb
-            // align top-left
-            stats.domElement.style.position = 'absolute';
-            stats.domElement.style.left = '0px';
-            stats.domElement.style.top = '0px';
-            document.body.appendChild( stats.domElement );
+                // STATS
+                stats = new Stats();
+                stats.setMode( 0 ); // 0: fps, 1: ms, 2: mb
+                // align top-left
+                stats.domElement.style.position = 'absolute';
+                stats.domElement.style.left = '0px';
+                stats.domElement.style.top = '0px';
+                document.body.appendChild( stats.domElement );
             }
 
             function loop(){
@@ -962,13 +968,13 @@
             
             //*
             if (Math.random()>.5){
-                var fol = foliages[Math.floor(Math.random()*foliages.length)];
-                fol.launchParticle();
+                
+                //wd.launchParticle();
             }
             
             if (Math.random()>.9){
-                var fol = foliagesComplex[Math.floor(Math.random()*foliagesComplex.length)];
-                fol.launchParticle();
+                
+                //wd.launchParticle();
             }
             
             for (var i=0; i<flyingParticles.length; i++){
@@ -986,6 +992,7 @@
                 }
             }
             //*/
+            updateShadows();
             render();
             stats.end();
             requestAnimationFrame(loop);
@@ -999,7 +1006,7 @@
         <div id="world"/>
             <div id="credits">
             - Press and drag to turn around -
-            <p><a href="https://codepen.io/Yakudoo/"  target="blank">my other codepens</a>  | <a href="https://epic.net" target="blank">epic.net</a> | <a href="http://www.meusinvest.be/2016/" target="blank">Created initially for this project</a></p>
+            <!--<p><a href="https://codepen.io/Yakudoo/"  target="blank">my other codepens</a>  | <a href="https://epic.net" target="blank">epic.net</a> | <a href="http://www.meusinvest.be/2016/" target="blank">Created initially for this project</a></p>-->
             </div>
 		
         	
