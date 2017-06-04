@@ -10,42 +10,66 @@
     </style>
 </head>
 <body>
-    <script src="js/three.min.js"></script>
+    <script src="js/three.js"></script>
+    <script src="js/Detector.js"></script>
     <script src="js/THREEx.KeyboardState.js"></script>
-    <script src="js/THREEx.FullScreen.js"></script>  
+    <script src="js/THREEx.FullScreen.js"></script> 
+    <script src="js/OrbitControls.js"></script>
     <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/Math2.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r14/Stats.min.js"></script>
     <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/GeometryHelpers.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/gsap/1.16.1/TweenMax.min.js"></script>
     <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/scene_colors.js"></script>
-    <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/OrbitControls.js"></script>
     <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/CustomMeshFlat.js"></script>
     <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/dat.gui.min.js"></script>
+     <script src="js/AnimationHandler.js"></script>
     <script>
-        var scene, camera, renderer;
+
+var scene, camera, renderer;
+
+
+//var handler = THREE.AnimationHandler.CATMULLROM;
 
 var WIDTH  = window.innerWidth;
 var HEIGHT = window.innerHeight;
 
 
+var mixer;
+var rotateact;
+var mesh,floor,skeleton;
+
+var meshes = [];
+
+var globalLight, shadowLight, backLight;
+
+var clock = new THREE.Clock();
+
+var url = '';
+
 var SPEED = 0.01;
 var keyboard = new THREEx.KeyboardState();
+
+
+init();
+animate();
 
 function init() {
 
     scene = new THREE.Scene();
   
-
-    createStats();
-    createLights();
-    createFloor(); 
-    initMesh(0,0,0);
-    initMesh(3,0,-5);
     initCamera();
+    createFloor();
+    createLights();
     initRenderer();
+    document.body.appendChild(renderer.domElement);
     initControls(); 
+    createStats();
+    var loader = new THREE.JSONLoader();
+    loader.load('./WindGenerator1.json',initMesh);
+        
 	THREEx.FullScreen.bindKey({ charCode : 'm'.charCodeAt(0) });
-    document.body.appendChild(renderer.domElement);      
+    window.addEventListener( 'resize', onWindowResize, false );
+      
 }
 
 
@@ -76,22 +100,43 @@ function initRenderer() {
     renderer.shadowMap.enabled = true;
 }
 
-var meshes = [];
-function initMesh(x,y,z) {
-    var loader = new THREE.JSONLoader();
-    loader.load('./WindGenerator.json', function(geometry,materials) {
-        var material = new THREE.MeshBasicMaterial();
-        material.map = THREE.ImageUtils.loadTexture('/BrushedMetal.jpg');
-        material.side = THREE.DoubleSide;
-        var mesh = new THREE.Mesh( geometry, material );
+
+function initMesh(geometry,materials) {
+         var material = new THREE.MeshStandardMaterial(materials);
+         material.map = THREE.ImageUtils.loadTexture('/BrushedMetal.jpg');
+         material.side = THREE.DoubleSide;
+         material.skinning = true;
+        
+
+        
+        mesh = new THREE.SkinnedMesh( geometry, material);
+       
         mesh.scale.set(0.25,0.25,0.25);
-        mesh.position.set(x,y,z);
+        mesh.position.set(0,0,0);
         mesh.rotation.y = -3.95;
+        
+
         meshes.push(mesh);
+        
+
         scene.add(mesh);
-    });
+
+        skeleton = new THREE.SkeletonHelper( mesh );
+        skeleton.visible = false;
+        scene.add( skeleton );
+
+        mixer = new THREE.AnimationMixer(mesh);      
+
+        rotateact = mixer.clipAction('Rotation');
+        rotateact.setEffectiveWeight(1);
+        rotateact.setEffectiveTimeScale(1);
+        rotateact.setLoop(THREE.LoopRepeat);
+        rotateact.clampWhenFinished = true;
+        rotateact.enabled = true;
+        rotateact.play();
+   
 }
-var Floor = function(){
+function Floor(){
             var floorCol = Colors.green_d;
             this.mesh =  new CustomMesh.PlaneMesh(50,50,11, floorCol);
             var vertices = this.mesh.geometry.vertices;
@@ -114,7 +159,7 @@ function createFloor(){
             floor = new Floor();           
             scene.add(floor.mesh);
 }
-var globalLight, shadowLight, backLight;
+
 function createLights() {
 
             var globalLight = new THREE.HemisphereLight(Colors.white_d, Colors.white_d, .8)
@@ -133,6 +178,11 @@ function createLights() {
             scene.add(pointLight );  
             scene.add(globalLight);  
 }
+    function onWindowResize() {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize( window.innerWidth, window.innerHeight );
+    }
 	
 function rotateMesh() {
     stats.begin();
@@ -141,28 +191,31 @@ function rotateMesh() {
     }
     for(var i=0;i<meshes.length;i++){
 
-   // mesh.rotation.x -= SPEED * 2;
-    meshes[i].rotation.y = -3.8;
-    //mesh.rotation.z -= SPEED * 3;
+   
+    
     }
     stats.end();
 }
 
 function animate() 
 {
-    requestAnimationFrame( animate );  
-	render();		
-	update();
-}
 
-function render() {
+    requestAnimationFrame( animate ); 
+
+    var delta = clock.getDelta();
+    if(typeof mixer != "undefined") {
+        mixer.update(delta); 
+        skeleton.update();
+    }
     controls.update();
-	stats.update();    
-    renderer.render(scene, camera);
+	stats.update();
+    renderer.render(scene, camera);     
+	
 }
 
-init();
-animate();
+
+
+
 
     </script>
 </body>
