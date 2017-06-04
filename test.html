@@ -10,6 +10,8 @@
     </style>
 </head>
 <body>
+    <div id="energy">Energy: 0 kW*h</div>
+    <div id="status">Status:</div>
     <script src="js/three.js"></script>
     <script src="js/Detector.js"></script>
     <script src="js/THREEx.KeyboardState.js"></script>
@@ -41,6 +43,25 @@ var clock = new THREE.Clock();
 var SPEED = 5;
 var settings;
 var paramSpeed = 23;
+
+var energy = {
+    power:0,
+    update: function(){
+        if( mixer.timeScale > 115 ){
+            document.getElementById("status").innerHTML = "Status: Idle";    
+        } else if( mixer.timeScale < 15 ){
+            document.getElementById("status").innerHTML = "Status: Idle"; 
+        } else {
+            this.power += mixer.timeScale/1000;
+            document.getElementById("status").innerHTML = "Status: Charging";
+            document.getElementById("energy").innerHTML = "Energy: " + Math.round(this.power) + " kW*h";
+            //console.log(Math.round(this.power));
+        }
+    }
+};
+
+
+
 var keyboard = new THREEx.KeyboardState();
 
 
@@ -64,6 +85,7 @@ function init() {
         
 	THREEx.FullScreen.bindKey({ charCode : 'm'.charCodeAt(0) });
     window.addEventListener( 'resize', onWindowResize, false );
+    
       
 }
 
@@ -75,7 +97,7 @@ function createStats(){
             stats.setMode( 0 ); // 0: fps, 1: ms, 2: mb
             // align top-left
             stats.domElement.style.position = 'absolute';
-            stats.domElement.style.left = '10px';
+            stats.domElement.style.left = '150px';
             stats.domElement.style.top = '10px';
             document.body.appendChild( stats.domElement );
             }
@@ -95,9 +117,15 @@ function createPanel() {
 
     var folder = panel.addFolder( 'General Speed Of Wind' );
     settings = {
-					'modify wind speed':     3.0
+					'modify wind speed':     3.0,
+                    'reset energy': function resetPower(){
+                        energy.power = 0;
+                        document.getElementById("energy").innerHTML = "Energy: 0 kW*h";
+                        
+                    }
 				};
     folder.add( settings, 'modify wind speed', 0.0, 25, 0.1 ).onChange( modifyTimeScale );
+    folder.add( settings, 'reset energy');
     folder.open();
 }
 function modifyTimeScale( speed ) {
@@ -142,7 +170,8 @@ function initMesh(geometry,materials) {
         skeleton.visible = false;
         scene.add( skeleton );
 
-        mixer = new THREE.AnimationMixer(mesh);      
+        mixer = new THREE.AnimationMixer(mesh);
+        mixer.timeScale = 15;  
 
         rotateact = mixer.clipAction('Rotation');
         rotateact.setEffectiveWeight(1);
@@ -208,7 +237,7 @@ function rotateMesh() {
     }
     for(var i=0;i<meshes.length;i++){
 
-   
+        
     
     }
     stats.end();
@@ -225,6 +254,7 @@ function animate()
         skeleton.update();
     }
     controls.update();
+    energy.update();
 	stats.update();
     renderer.render(scene, camera);     
 	
