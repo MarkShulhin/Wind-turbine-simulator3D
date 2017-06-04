@@ -22,31 +22,25 @@
     <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/scene_colors.js"></script>
     <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/CustomMeshFlat.js"></script>
     <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/dat.gui.min.js"></script>
-     <script src="js/AnimationHandler.js"></script>
     <script>
 
 var scene, camera, renderer;
 
-
-//var handler = THREE.AnimationHandler.CATMULLROM;
-
 var WIDTH  = window.innerWidth;
 var HEIGHT = window.innerHeight;
-
 
 var mixer;
 var rotateact;
 var mesh,floor,skeleton;
-
 var meshes = [];
 
 var globalLight, shadowLight, backLight;
 
 var clock = new THREE.Clock();
 
-var url = '';
-
-var SPEED = 0.01;
+var SPEED = 5;
+var settings;
+var paramSpeed = 23;
 var keyboard = new THREEx.KeyboardState();
 
 
@@ -62,7 +56,8 @@ function init() {
     createLights();
     initRenderer();
     document.body.appendChild(renderer.domElement);
-    initControls(); 
+    initControls();
+    createPanel(); 
     createStats();
     var loader = new THREE.JSONLoader();
     loader.load('./WindGenerator1.json',initMesh);
@@ -92,6 +87,28 @@ function initCamera() {
 }
 function initControls(){
     controls = new THREE.OrbitControls( camera, renderer.domElement );
+}
+
+function createPanel() {
+
+    var panel = new dat.GUI( { width: 310 } );
+
+    var folder = panel.addFolder( 'General Speed Of Wind' );
+    settings = {
+					'modify wind speed':     3.0
+				};
+    folder.add( settings, 'modify wind speed', 0.0, 25, 0.1 ).onChange( modifyTimeScale );
+    folder.open();
+}
+function modifyTimeScale( speed ) {
+    mixer.timeScale = SPEED * speed;
+    if( speed > 23 ){
+        mixer.timeScale = 0;
+        console.log("Too fast!:(");
+    } else if( speed < 3 ){
+        mixer.timeScale = 0;
+        console.log("Too slow!:(");
+    }
 }
 
 function initRenderer() {
