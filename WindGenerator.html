@@ -24,7 +24,7 @@
             bottom:0;
             margin-bottom:20px;
             font-family:'Open Sans', sans-serif;
-            color:#f7e1be;;
+            color:#f7e1be;
             font-size:0.7em;
             text-transform: uppercase;
             text-align : center;
@@ -32,24 +32,34 @@
             letter-spacing: 2px;
             }
 
-            #credits a {
+            #credits div {
             color:#dbf4e8;
             }
 
-            #credits a:hover {
+            #credits div:hover {
             color:#fb5d24;
             }
+            #err {
+            top: -610%;
+            font-family:'Open Sans', sans-serif;
+            left: 40%;
+            position: absolute;
+            color:#f99339;
+            text-transform: uppercase;
+            text-align : center;
+            line-height:1.5;
+            letter-spacing: 2px;
+            }
 		</style>
-        <script src="js/three.js"></script>
-        <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/Math2.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r14/Stats.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r73/three.min.js   "></script>
-        <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/GeometryHelpers.js"></script>
-        <script src="//cdnjs.cloudflare.com/ajax/libs/gsap/1.16.1/TweenMax.min.js"></script>
-        <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/scene_colors.js"></script>
-        <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/OrbitControls.js"></script>
-        <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/CustomMeshFlat.js"></script>
-        <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/264161/dat.gui.min.js"></script>
+        <script src="js/r73/three.js"></script>
+        <script src="js/Math2.js"></script>
+        <script src="js/stats.min.js"></script>
+        <script src="js/264161/GeometryHelpers.js"></script>
+        <script src="js/TweenMax.min.js"></script>
+        <script src="js/264161/scene_colors.js"></script>
+        <script src="js/264161/OrbitControls.js"></script>
+        <script src="js/264161/CustomMeshFlat.js"></script>
+        <script src="js/264161/dat.gui.min.js"></script>
 		<script>
                         /*
             Used initially for a client to create this greeting card :
@@ -65,7 +75,8 @@
                 renderer,
                 container,
                 controls,
-                mouseDown = false;
+                mouseDown = false,
+                clock = new THREE.Clock();
             ////////////////////////////////////////////////
             //                      SCREEN & MOUSE VARIABLES
             ////////////////////////////////////////////////
@@ -85,6 +96,28 @@
                 foliages = [],
                 foliagesComplex = [];
 
+                var mixer,
+                    rotateact,
+                    mesh,floor,skeleton,
+                    meshes = [],
+                    SPEED = 5,
+                    settings,                    
+                    energy = {
+                        power:0,
+                        update: function(){
+                            if( mixer.timeScale > 115 ){
+                                document.getElementById("status").innerHTML = "Status: Idle";    
+                            } else if( mixer.timeScale < 15 ){
+                                document.getElementById("status").innerHTML = "Status: Idle"; 
+                            } else {
+                                this.power += mixer.timeScale/1000;
+                                document.getElementById("status").innerHTML = "Status: Charging";
+                                document.getElementById("energy").innerHTML = "Energy: " + Math.round(this.power) + " kW*h";
+                                //console.log(Math.round(this.power));
+                            }
+                        }
+                    };
+
             ////////////////////////////////////////////////
             //                                   STATS & GUI
             ////////////////////////////////////////////////
@@ -101,32 +134,21 @@
             animationSpeed: 2.5,
             };
 
-            function initGUI(){
-            var gui = new dat.GUI();
-            gui.width = 250;
-            gui.add(parameters, 'truncHeight').min(60).max(110).step(10).name('Trunc Height');
-            gui.add(parameters, 'truncThickness').min(2).max(6).step(1).name('Trunc Thickness');
-            gui.add(parameters, 'truncNoise').min(0).max(5).step(.5).name('Trunc Disp.');
-            gui.add(parameters, 'truncColor', {
-                "Light White":Colors.white_l,
-                "Dark White":Colors.white_d,
-                "Light Grey":Colors.grey_l,
-                "Dark Grey":Colors.grey_d
-            }).name('Trunc Color');
-            gui.add(parameters, 'foliageColor', {
-                "White":"whites",
-                "Grey":"greys",
-                "Pink":"pinks",
-                "Yellow":"yellows",
-                "Purple":"purples"
-            }).name('Foliage Color');
-            gui.add(parameters, 'foliageDensity').min(3).max(8).step(1).name('Foliage Density');
-            gui.add(parameters, 'foliageNoise').min(0).max(.2).step(.01).name('Foliage Disp.');
-            gui.add(parameters, 'foliageSize').min(5).max(30).step(1).name('Foliage Size.');
-            //gui.add(parameters, 'animationSpeed').min(1).max(4).step(.5).name('Anim. Speed');
-            
-            
-            gui.add({generate:function(){createTree()}}, 'generate').name(">GENERATE");
+            function initGUI() {
+
+                var panel = new dat.GUI( { width: 310 } );
+
+                var folder = panel.addFolder( 'General Speed Of Wind' );
+                settings = {
+                                'Modify wind speed':     3.0,
+                                'Reset energy': function resetPower(){
+                                    energy.power = 0;
+                                    document.getElementById("energy").innerHTML = "Energy: 0 kW*h";  
+                                }
+                            };
+                folder.add( settings, 'Modify wind speed', 0.0, 25, 0.1 ).onChange( modifyTimeScale );
+                folder.add( settings, 'Reset energy');
+                folder.open();
             }
 
             ////////////////////////////////////////////////
@@ -198,6 +220,20 @@
             renderer.setSize(WIDTH, HEIGHT);
             camera.aspect = WIDTH / HEIGHT;
             camera.updateProjectionMatrix();
+        }
+            function modifyTimeScale( speed ) {
+                mixer.timeScale = SPEED * speed;
+                if( speed > 23 ){
+                    mixer.timeScale = 0;
+                    document.getElementById("err").innerHTML = "The wind is too fast!";
+                    //console.log("Too fast!:(");
+                } else if( speed < 3 ){
+                    mixer.timeScale = 0;
+                    document.getElementById("err").innerHTML = "The wind is too slow!";
+                    //console.log("Too slow!:(");
+                } else {
+                    document.getElementById("err").innerHTML = "";
+                }
             }
 
             function mouseDownHandler(event) {
@@ -300,37 +336,62 @@
             // TREE
 
             function createTree(){
-            if (tree){
-                tree.fly(function(){
-                scene.remove(tree.mesh);
-                tree.kill();
-                tree = null;
-                foliagesComplex = [];
-                createTree();
-                })
-            }else{
-                tree = new Tree(true);
-                tree.mesh.position.y = -10;
-                scene.add(tree.mesh);
-                tree.trunc.grow();
-                updateShadows();  
-            } 
-            }
-             CreateWG = function() {
-                var loader = new THREE.JSONLoader();
-                loader.load('./WindGenerator.json', function(geometry,materials) {
-                    var material = new THREE.MeshBasicMaterial();
+                if (tree){
+                    tree.fly(function(){
+                    scene.remove(tree.mesh);
+                    tree.kill();
+                    tree = null;
+                    foliagesComplex = [];
+                    createTree();
+                    })
+                }else{
+                    tree = new Tree(true);
+                    tree.mesh.position.y = -10;
+                    scene.add(tree.mesh);
+                    tree.trunc.grow();
+                    updateShadows();  
+                } 
+            }       
+               function createWG(geometry,materials) {
+                    var material = new THREE.MeshBasicMaterial(materials);
                     material.map = THREE.ImageUtils.loadTexture('/BrushedMetal.jpg');
                     material.side = THREE.DoubleSide;
-                    var mesh = new THREE.Mesh( geometry, material );
+                    material.skinning = true;
+                    
+
+                    
+                    mesh = new THREE.SkinnedMesh( geometry, material);
                     mesh.scale.set(15,15,15);
                     mesh.position.y = -5;
                     mesh.rotation.y = -3.95;
-                    //meshes.push(mesh);
+                    
+
+                    meshes.push(mesh);
+                    
+
                     scene.add(mesh);
+
+                    skeleton = new THREE.SkeletonHelper( mesh );
+                    skeleton.visible = false;
+                    scene.add( skeleton );
+
+                    mixer = new THREE.AnimationMixer(mesh);
+                    mixer.timeScale = 15;  
+                    
+                    //approach for r73
+                    rotateact = new THREE.AnimationAction( geometry.animations[ 0 ] );
+                    rotateact.weight = 1;
+                    mixer.addAction(rotateact);
+                    //approach for r85
+                    //rotateact.setEffectiveWeight(1);
+                    //rotateact.setEffectiveTimeScale(1);
+                    //rotateact.setLoop(THREE.LoopRepeat);
+                    //rotateact.clampWhenFinished = true;
+                    //rotateact.enabled = true;
+                    // rotateact.play();
                     updateShadows();
-                });
-            }
+               
+                }
             
 
 
@@ -830,7 +891,6 @@
                 if (complex) foliagesComplex.push(this);
             else foliages.push(this);
         }
-
         SubFoliage = function(scale, hierarchy){
             this.type = "subfoliage";
                 var sw = Math2.rangeRandomInt(2,4);
@@ -933,7 +993,8 @@
             createLights();
             createFloor();
             createForest();
-            var wd = new CreateWG();
+            var loader = new THREE.JSONLoader();
+            loader.load('./WindGenerator1.json',createWG);
             loop();
             }
 
@@ -961,38 +1022,16 @@
 
             stats.begin();
             
-            console.log("waiting",waitingParticles.length);
-
-            var frustum = new THREE.Frustum();
-            frustum.setFromMatrix( new THREE.Matrix4().multiplyMatrices( camera.projectionMatrix, camera.matrixWorldInverse ) );  
-            
-            //*
-            if (Math.random()>.5){
-                
-                //wd.launchParticle();
-            }
-            
-            if (Math.random()>.9){
-                
-                //wd.launchParticle();
-            }
-            
-            for (var i=0; i<flyingParticles.length; i++){
-                var p = flyingParticles[i];
-                p.position.x += p.userData.speedX + Math.random()/10;
-                p.position.y += p.userData.speedY + Math.random()/20;
-                
-                p.rotation.x += .01 + Math.random()/100;
-                p.rotation.y += .01 + Math.random()/10;
-                p.rotation.z += .1 + Math.random()/20;
-
-                if(!frustum.containsPoint( p.position )){
-                p.visible = false;
-                waitingParticles.push(flyingParticles.splice(i,1)[0]);
-                }
-            }
-            //*/
             updateShadows();
+            var delta = clock.getDelta();
+            if (mixer) {
+
+                mixer.update(delta);
+                skeleton.update();
+                energy.update();
+
+            }
+            
             render();
             stats.end();
             requestAnimationFrame(loop);
@@ -1006,7 +1045,8 @@
         <div id="world"/>
             <div id="credits">
             - Press and drag to turn around -
-            <!--<p><a href="https://codepen.io/Yakudoo/"  target="blank">my other codepens</a>  | <a href="https://epic.net" target="blank">epic.net</a> | <a href="http://www.meusinvest.be/2016/" target="blank">Created initially for this project</a></p>-->
+            <p><div id="energy">Energy: 0 kW*h</div>  | <div id="status">Status:</div> | <div>Выполнил:Ярослав Литвин</div></p>
+            <span id="err"></span>
             </div>
 		
         	
