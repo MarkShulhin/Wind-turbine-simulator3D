@@ -3,7 +3,7 @@
 	<head>
 		<meta charset=utf-8>
 		<title>WindGenerator using Three.js</title>
-        <link rel="stylesheet" href="">
+        
 		<style>
 			body { margin: 0; }
 			canvas { width: 100%; height: 100% }
@@ -50,7 +50,12 @@
             line-height:1.5;
             letter-spacing: 2px;
             }
+            #energy {
+                    float:left;
+            }
+            
 		</style>
+        <link rel="stylesheet" href="css/loader.css">
         <script src="js/r73/three.js"></script>
         <script src="js/Math2.js"></script>
         <script src="js/stats.min.js"></script>
@@ -61,10 +66,26 @@
         <script src="js/264161/CustomMeshFlat.js"></script>
         <script src="js/264161/dat.gui.min.js"></script>
 		<script>
-                        /*
-            Used initially for a client to create this greeting card :
-            http://www.meusinvest.be/2016/
-            */
+            function $(id){
+                return document.getElementById(id)
+                
+            }
+            function $c(classid){
+                return document.getElementsByClassName(classid);
+            }
+            
+            function switchVisibility(arr,num,visibility){
+                if(num>0){
+                    for( var i = 0; i < num; i++ ){
+                        $c(arr[i])[0].style.visibility = visibility;
+                    }
+                } else if (num < 0) {
+                    for( var i = arr.length-1; num < 0; num++,i-- ){
+                        $c(arr[i])[0].style.visibility = visibility;
+                    }
+                }
+            }
+            
 
             ////////////////////////////////////////////////
             //                  THREE JS RELATED VARIABLES
@@ -94,28 +115,58 @@
                 waitingParticles = [],
                 flyingParticles = [],
                 foliages = [],
-                foliagesComplex = [];
+                foliagesComplex = [],
+                electricity = false;
 
                 var mixer,
                     rotateact,
                     mesh,floor,skeleton,
                     meshes = [],
                     SPEED = 5,
-                    settings,                    
+                    settings,
+                    classes=["perc red0","perc red1","perc red2","perc green0","perc green1","perc green2"],                    
                     energy = {
-                        power:0,
-                        update: function(){
+                        power:0,                       
+                        updateEnergy: function(){
                             if( mixer.timeScale > 115 ){
-                                document.getElementById("status").innerHTML = "Status: Idle";    
+                                $("status").innerHTML = "Status: Idle";    
                             } else if( mixer.timeScale < 15 ){
-                                document.getElementById("status").innerHTML = "Status: Idle"; 
+                                $("status").innerHTML = "Status: Idle"; 
                             } else {
-                                this.power += mixer.timeScale/1000;
-                                document.getElementById("status").innerHTML = "Status: Charging";
-                                document.getElementById("energy").innerHTML = "Energy: " + Math.round(this.power) + " kW*h";
-                                //console.log(Math.round(this.power));
+                                this.power += mixer.timeScale/700;
+                                if(this.power > 1000) this.power = 1000;
+                                $("status").innerHTML = "Status: Charging";
+                                $("energy").innerHTML = "Energy: " + Math.round(this.power) + " kW*h";
                             }
-                        }
+                        },
+                        updateBattery: function(){
+                            if(this.power < 166.666667){
+                                switchVisibility(classes,classes.length,"hidden");
+                                switchVisibility(classes,1,"visible");
+                            } else if(this.power < 333.333333) {
+                                switchVisibility(classes,-4,"hidden"); 
+                                switchVisibility(classes,2,"visible");
+                            } else if(this.power < 500) {
+                                switchVisibility(classes,-3,"hidden");                             
+                                switchVisibility(classes,3,"visible"); 
+                            } else if(this.power < 666.666667) {
+                                switchVisibility(classes,-2,"hidden");                             
+                                switchVisibility(classes,4,"visible");
+                            } else if(this.power < 833.333334) {
+                                switchVisibility(classes,-1,"hidden");                             
+                                switchVisibility(classes,5,"visible");
+                            } else if(this.power < 1001) {
+                                switchVisibility(classes,6,"visible");                             
+                            } 
+                        },
+                        updateElectricity: function(){
+                            if(electricity){ 
+                                    energy.power -= 57.5/700;
+                                    if(energy.power < 0)
+                                        energy.power = 0;
+                                    $("energy").innerHTML = "Energy: " + Math.round(energy.power) + " kW*h";
+                                }
+                            }                       
                     };
 
             ////////////////////////////////////////////////
@@ -144,10 +195,15 @@
                                 'Reset energy': function resetPower(){
                                     energy.power = 0;
                                     document.getElementById("energy").innerHTML = "Energy: 0 kW*h";  
+                                },
+                                'Electricity On/Off': function switchElectricity(){
+                                    if(electricity) electricity = false;
+                                    else electricity = true;
                                 }
                             };
                 folder.add( settings, 'Modify wind speed', 0.0, 25, 0.1 ).onChange( modifyTimeScale );
                 folder.add( settings, 'Reset energy');
+                folder.add( settings, 'Electricity On/Off');
                 folder.open();
             }
 
@@ -1028,8 +1084,10 @@
 
                 mixer.update(delta);
                 skeleton.update();
-                energy.update();
-
+                energy.updateElectricity();
+                energy.updateEnergy();
+                energy.updateBattery();
+                
             }
             
             render();
@@ -1042,12 +1100,30 @@
 
 	</head>
 	<body>
+       
+
         <div id="world"/>
-            <div id="credits">
-            - Press and drag to turn around -
-            <p><div id="energy">Energy: 0 kW*h</div>  | <div id="status">Status:</div> | <div>Выполнил:Ярослав Литвин</div></p>
-            <span id="err"></span>
+            <div class="controls">
+                <div class="loader">
+                    <div class="perc green2"></div>
+                    <div class="perc green1"></div>
+                    <div class="perc green0"></div>
+                    <div class="perc red2"></div>
+                    <div class="perc red1"></div>
+                    <div class="perc red0"></div>
+                </div>
+                    <div class="batteryStats">
+                        <div id="energy">Energy: 0 kW*h</div>
+                        <div id="capacity">Capacity: 1 MW</div>
+                    </div>
+                   
             </div>
+            </div>
+                <div id="credits">
+                - Press and drag to turn around -
+                <p>  | <div id="status">Status:</div> | <div>Выполнил:Ярослав Литвин</div></p>
+                <span id="err"></span>
+        </div>
 		
         	
 	</body>
