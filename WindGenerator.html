@@ -209,10 +209,11 @@
                                     $("electro").innerHTML = "Electricity: off";
                                     this['Modify wind speed'] = 0.0;
                                     mixer.timeScale = 0;
-                                    $("err").innerHTML = "CRITICAL STOP!!";            
+                                    $("err").innerHTML = "CRITICAL STOP!!";                                               
                                     }
                             };
                 folder.add( settings, 'Modify wind speed', 0.0, 25, 0.1 ).onChange( modifyTimeScale );
+                folder.__controllers[0].listen();           
                 folder.add( settings, 'Reset energy');
                 folder.add( settings, 'Electricity On/Off');
                 folder.add( settings, 'STOP ALL');
