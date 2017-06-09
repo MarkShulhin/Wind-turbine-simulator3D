@@ -36,19 +36,18 @@
             color:#dbf4e8;
             }
 
-            #credits div:hover {
-            color:#fb5d24;
-            }
+           
             #err {
-            top: -610%;
-            font-family:'Open Sans', sans-serif;
-            left: 40%;
             position: absolute;
+            top: 25px;
+            font-family:'Open Sans', sans-serif;
+            left: 250px;
             color:#f99339;
             text-transform: uppercase;
             text-align : center;
             line-height:1.5;
             letter-spacing: 2px;
+            z-index: 100;
             }
             #energy {
                     float:left;
@@ -197,13 +196,26 @@
                                     document.getElementById("energy").innerHTML = "Energy: 0 kW*h";  
                                 },
                                 'Electricity On/Off': function switchElectricity(){
-                                    if(electricity) electricity = false;
-                                    else electricity = true;
-                                }
+                                    if(electricity){
+                                        electricity = false;
+                                        $("electro").innerHTML = "Electricity: off";
+                                    } else {
+                                        electricity = true;
+                                        $("electro").innerHTML = "Electricity: on";
+                                    } 
+                                },
+                                'STOP ALL': function stopall(){
+                                    electricity = false;
+                                    $("electro").innerHTML = "Electricity: off";
+                                    this['Modify wind speed'] = 0.0;
+                                    mixer.timeScale = 0;
+                                    $("err").innerHTML = "CRITICAL STOP!!";            
+                                    }
                             };
                 folder.add( settings, 'Modify wind speed', 0.0, 25, 0.1 ).onChange( modifyTimeScale );
                 folder.add( settings, 'Reset energy');
                 folder.add( settings, 'Electricity On/Off');
+                folder.add( settings, 'STOP ALL');
                 folder.open();
             }
 
@@ -278,18 +290,21 @@
             camera.updateProjectionMatrix();
         }
             function modifyTimeScale( speed ) {
-                mixer.timeScale = SPEED * speed;
-                if( speed > 23 ){
-                    mixer.timeScale = 0;
-                    document.getElementById("err").innerHTML = "The wind is too fast!";
-                    //console.log("Too fast!:(");
-                } else if( speed < 3 ){
-                    mixer.timeScale = 0;
-                    document.getElementById("err").innerHTML = "The wind is too slow!";
-                    //console.log("Too slow!:(");
-                } else {
-                    document.getElementById("err").innerHTML = "";
-                }
+
+                    mixer.timeScale = SPEED * speed;
+                    $("windspeed").innerHTML = "Wind speed: " + Math.round(speed * 100)/100 + " km/h";
+                    if( speed > 23 ){
+                        mixer.timeScale = 0;                  
+                        $("err").innerHTML = "The wind is too fast!";
+                        //console.log("Too fast!:(");
+                    } else if( speed < 3 ){
+                        mixer.timeScale = 0;
+                        $("err").innerHTML = "The wind is too slow!";
+                        //console.log("Too slow!:(");
+                    } else {
+                        $("err").innerHTML = "";
+                    }
+                
             }
 
             function mouseDownHandler(event) {
@@ -1100,6 +1115,7 @@
 
 	</head>
 	<body>
+        <span id="err"></span>
        
 
         <div id="world"/>
@@ -1115,14 +1131,18 @@
                     <div class="batteryStats">
                         <div id="energy">Energy: 0 kW*h</div>
                         <div id="capacity">Capacity: 1 MW</div>
+                        <div id="electro">Electricity: off</div>
+                        <div id="usage">Battery usage: 4.5 KW*H</div>
+                        <div id="windspeed">Wind speed: 3 km/h</div>
+                        <div id="winddir">Direction: </div>
                     </div>
                    
             </div>
             </div>
                 <div id="credits">
                 - Press and drag to turn around -
-                <p>  | <div id="status">Status:</div> | <div>Выполнил:Ярослав Литвин</div></p>
-                <span id="err"></span>
+                <p>  <div id="status">Status:</div> | <div>Выполнил:Ярослав Литвин</div></p>
+                
         </div>
 		
         	

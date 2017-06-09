@@ -1,8 +1,8 @@
 .controls {
-    width:250px;
+    width:290px;
     height:260px;
     position: absolute;
-    border: 3px solid black;
+    border: 3px solid #AAF0D1;
     border-radius: 3px;
     top:65%;
     left:15px;
@@ -85,7 +85,7 @@
     letter-spacing: 1px;
 }
 #energy{
-  position:relative;
+  position:absolute;
   float:left;
   margin-top:40px;
   margin-left:115px;
@@ -95,4 +95,23 @@
   margin-top:60px;
   margin-left:115px;
 }
-
+#windspeed{
+  position:absolute;
+  margin-top:170px;
+  margin-left:25px;
+}
+#winddir{
+  position:absolute;
+  margin-top:190px;
+  margin-left:25px;
+}
+#electro{
+  position:absolute;
+  margin-top:80px;
+  margin-left:115px;
+}
+#usage{
+  position:absolute;
+  margin-top:100px;
+  margin-left:115px;
+}
