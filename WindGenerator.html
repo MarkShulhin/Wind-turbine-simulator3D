@@ -132,7 +132,14 @@
                             } else if( mixer.timeScale < 15 ){
                                 $("status").innerHTML = "Status: Idle"; 
                             } else {
-                                this.power += mixer.timeScale/700;
+                                if(settings['Wind direction'] == 'North'){                                   
+                                    this.power += mixer.timeScale/700;
+                                }
+                                else if(settings['Wind direction'] == 'North-East' || settings['Wind direction'] == 'North-West'){                  
+                                    this.power += mixer.timeScale/1400;
+                                } else {
+                                    mixer.timeScale = 0;
+                                }
                                 if(this.power > 1000) this.power = 1000;
                                 $("status").innerHTML = "Status: Charging";
                                 $("energy").innerHTML = "Energy: " + Math.round(this.power) + " kW*h";
@@ -210,13 +217,16 @@
                                     this['Modify wind speed'] = 0.0;
                                     mixer.timeScale = 0;
                                     $("err").innerHTML = "CRITICAL STOP!!";                                               
-                                    }
+                                    },
+                                    'Wind direction':'North'
                             };
                 folder.add( settings, 'Modify wind speed', 0.0, 25, 0.1 ).onChange( modifyTimeScale );
                 folder.__controllers[0].listen();           
                 folder.add( settings, 'Reset energy');
                 folder.add( settings, 'Electricity On/Off');
                 folder.add( settings, 'STOP ALL');
+                folder.add( settings, 'Wind direction',
+                ['North','West','East','South','North-West','North-East','South-West','South-East']).onChange( updateDirection );
                 folder.open();
             }
 
@@ -306,6 +316,10 @@
                         $("err").innerHTML = "";
                     }
                 
+            }
+            function updateDirection(){
+               $("winddir").innerHTML = "Direction: " + settings['Wind direction'];
+               modifyTimeScale(settings['Modify wind speed']);
             }
 
             function mouseDownHandler(event) {
@@ -1135,7 +1149,7 @@
                         <div id="electro">Electricity: off</div>
                         <div id="usage">Battery usage: 4.5 KW*H</div>
                         <div id="windspeed">Wind speed: 3 km/h</div>
-                        <div id="winddir">Direction: </div>
+                        <div id="winddir">Direction: NORTH</div>
                     </div>
                    
             </div>
