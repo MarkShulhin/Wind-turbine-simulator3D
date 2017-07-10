@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset=utf-8>
+		<title>WindGenerator using Three.js</title>
+        
+        <!--   source files
+
+        <link rel="stylesheet" href="css/main.css">
+        <link rel="stylesheet" href="css/loader.css">
+        
+        <script src="js/three.js"></script>
+        <script src="js/Math2.js"></script>
+        <script src="js/stats.min.js"></script>
+        <script src="js/GeometryHelpers.js"></script>
+        <script src="js/TweenMax.min.js"></script>
+        <script src="js/scene_colors.js"></script>
+        <script src="js/OrbitControls.js"></script>
+        <script src="js/CustomMeshFlat.js"></script>
+        <script src="js/dat.gui.min.js"></script>
+		<script src="js/main.js"></script>
+        -->
+        <link rel="stylesheet" href="css/main.min.css">
+        <script src="js/all.min.js"></script>
+
+	</head>
+	<body>
+        <span id="err"></span>
+       
+
+        <div id="world"/>
+            <div class="controls">
+                <div class="loader">
+                    <div class="perc green2"></div>
+                    <div class="perc green1"></div>
+                    <div class="perc green0"></div>
+                    <div class="perc red2"></div>
+                    <div class="perc red1"></div>
+                    <div class="perc red0"></div>
+                </div>
+                    <div class="batteryStats">
+                        <div id="energy">Energy: 0 kW*h</div>
+                        <div id="capacity">Capacity: 1 MW</div>
+                        <div id="electro">Electricity: off</div>
+                        <div id="usage">Battery usage: 4.5 KW*H</div>
+                        <div id="windspeed">Wind speed: 3 km/h</div>
+                        <div id="winddir">Direction: NORTH</div>
+                    </div>
+                   
+            </div>
+            </div>
+                <div id="credits">
+                - Press and drag to turn around -
+                <p>  <div id="status">Status:</div> | <div>Created by:<a href="https://github.com/MarkShulhin">Mark Shulhin</a></div></p>
+                
+        </div>
+		
+        	
+	</body>
+</html>
